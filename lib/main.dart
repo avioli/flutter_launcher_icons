@@ -52,7 +52,12 @@ Future<void> createIconsFromArguments(List<String> arguments) async {
   // Create icons
   if ( !hasFlavors ) {
     try {
-      createIconsFromConfig(yamlConfig);
+      final String flavor = argResults[flavorOption];
+      final Map<String, dynamic> flavors = yamlConfig['flavors'];
+      if (flavor != null && flavor.isNotEmpty && flavors != null && flavors[flavor] != null)
+        createIconsFromConfig(flavors[flavor], flavor);
+      else
+        createIconsFromConfig(yamlConfig);
     } catch (e) {
       stderr.writeln(e);
       exit(2);
