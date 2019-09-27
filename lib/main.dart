@@ -7,50 +7,92 @@ import 'package:flutter_launcher_icons/custom_exceptions.dart';
 import 'package:flutter_launcher_icons/ios.dart' as ios_launcher_icons;
 import 'package:yaml/yaml.dart';
 
-const String flavorOption = 'flavor';
-const String fileOption = 'file';
-const String helpFlag = 'help';
 const String defaultConfigFile = 'flutter_launcher_icons.yaml';
 const String flavorConfigFilePattern = "\./flutter_launcher_icons-(.*).yaml";
 String flavorConfigFile(String flavor) => "flutter_launcher_icons-$flavor.yaml";
 
-Future<void> createIconsFromArguments(List<String> arguments) async {
-  final parser = ArgParser(allowTrailingOptions: true);
-  parser.addFlag(
-    helpFlag,
-    abbr: 'h',
-    help: 'Usage help',
-    negatable: false,
-  );
-  // Make default null to differentiate when it is explicitly set
-  parser.addOption(
-    fileOption,
-    abbr: 'f',
-    help: 'Config file (default: $defaultConfigFile)',
-  );
-  parser.addOption(
-    flavorOption,
-    help: 'Use flavor',
-  );
-  final argResults = parser.parse(arguments);
+class Arguments {
+  factory Arguments.parse(List<String> arguments) {
+    final parser = ArgParser(allowTrailingOptions: true);
+    parser.addFlag(
+      'help',
+      abbr: 'h',
+      help: 'Usage help',
+      negatable: false,
+    );
+    parser.addOption(
+      'file',
+      abbr: 'f',
+      help: 'Config file (default: $defaultConfigFile)',
+    );
+    parser.addOption(
+      'flavor',
+      help: 'Use flavor',
+    );
 
-  if (argResults[helpFlag] as bool) {
-    stdout.writeln('Generates icons for iOS and Android');
-    stdout.writeln(parser.usage);
-    exit(0);
+    try {
+      final argResults = parser.parse(arguments);
+
+      final args = Arguments._internal(
+        help: argResults['help'] as bool,
+        configFile: argResults['file'] as String,
+        flavor: argResults['flavor'] as String,
+      );
+
+      if (args.help) {
+        stdout.writeln('''
+Generates icons for iOS and Android
+
+Usage:
+${parser.usage}
+
+Notes:
+Config is read from -f, --file, if set, otherwise defaults to `$defaultConfigFile`.
+If a flavor is set, `${flavorConfigFile('<flavor>')}` is looked up and used, if found.
+Final fallback is to read config from `pubspec.yaml`.
+
+The configuration in any of those files should be under the `flutter_icons:` key.
+''');
+        exit(0);
+      }
+
+      return args;
+    } on FormatException catch (e) {
+      stdout.writeln(e.message);
+      stdout.writeln(parser.usage);
+      exit(1);
+      return null;
+    }
   }
+
+  Arguments._internal({
+    this.help = false,
+    String configFile,
+    this.flavor,
+  }) : configFile = configFile == null ? null : File(configFile);
+
+  final bool help;
+  final File configFile;
+  final String flavor;
+}
+
+Future<void> createIconsFromArguments(List<String> arguments) async {
+  final args = Arguments.parse(arguments);
 
   // Flavors manangement
   var flavors = getFlavors();
   var hasFlavors = flavors.isNotEmpty;
 
   // Load the config file
-  final Map<String, dynamic> yamlConfig = loadConfigFileFromArgResults(argResults, verbose: true);
+  final Map<String, dynamic> yamlConfig = loadConfig(
+    args.configFile,
+    verbose: true,
+  );
 
   // Create icons
   if ( !hasFlavors ) {
     try {
-      final String flavor = argResults[flavorOption];
+      final String flavor = args.flavor;
       final Map<String, dynamic> flavors = yamlConfig['flavors'];
       if (flavor != null && flavor.isNotEmpty && flavors != null && flavors[flavor] != null)
         createIconsFromConfig(flavors[flavor], flavor);
@@ -98,11 +140,10 @@ Future<void> createIconsFromConfig(Map<String, dynamic> config, [String flavor])
   }
 }
 
-Map<String, dynamic> loadConfigFileFromArgResults(ArgResults argResults,
-    {bool verbose}) {
+Map<String, dynamic> loadConfig(File file, {bool verbose}) {
   verbose ??= false;
-  final String configFile = argResults[fileOption];
-  final String fileOptionResult = argResults[fileOption];
+  final String configFile = file?.path;
+  final String fileOptionResult = file?.path;
 
   // if icon is given, try to load icon
   if (configFile != null && configFile != defaultConfigFile) {
