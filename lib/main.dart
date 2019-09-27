@@ -1,11 +1,11 @@
 import 'dart:io';
 
 import 'package:args/args.dart';
-import 'package:yaml/yaml.dart';
 import 'package:flutter_launcher_icons/android.dart' as android_launcher_icons;
-import 'package:flutter_launcher_icons/ios.dart' as ios_launcher_icons;
 import 'package:flutter_launcher_icons/constants.dart';
 import 'package:flutter_launcher_icons/custom_exceptions.dart';
+import 'package:flutter_launcher_icons/ios.dart' as ios_launcher_icons;
+import 'package:yaml/yaml.dart';
 
 const String flavorOption = 'flavor';
 const String fileOption = 'file';
