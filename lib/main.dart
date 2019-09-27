@@ -127,21 +127,23 @@ Map<String, dynamic> loadConfigFileFromArgResults(ArgResults argResults,
   return null;
 }
 
-Map<String, dynamic> loadConfigFile(String path, String fileOptionResult) {
-  final File file = File(path);
-  final String yamlString = file.readAsStringSync();
+Map<String, dynamic> loadConfigFile(
+  String path, [
+  String configFile = defaultConfigFile,
+]) {
+  final file = File(path);
+  final yamlString = file.readAsStringSync();
 
   final dynamic yamlMap = loadYaml(yamlString);
   if (yamlMap is! YamlMap) {
     stderr.writeln(NoConfigFoundException('Invalid config file '
-        '`${fileOptionResult ?? defaultConfigFile}`'));
+        '`$configFile`'));
     exit(1);
   }
 
   if (yamlMap['flutter_icons'] is! YamlMap) {
     stderr.writeln(NoConfigFoundException('Check that your config file '
-        '`${fileOptionResult ?? defaultConfigFile}`'
-        ' has a `flutter_icons` section'));
+        '`$configFile` has a `flutter_icons` section'));
     exit(1);
   }
 
