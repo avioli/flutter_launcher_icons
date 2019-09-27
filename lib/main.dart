@@ -14,11 +14,11 @@ Future<void> createIconsFromArguments(List<String> arguments) async {
   final args = Arguments.parse(arguments);
 
   // Flavors manangement
-  var flavors = getFlavors();
+  var flavors = Config.getFlavors();
   var hasFlavors = flavors.isNotEmpty;
 
   // Load the config file
-  final Map<String, dynamic> yamlConfig = loadConfig(
+  final Map<String, dynamic> yamlConfig = Config.loadConfig(
     args.configFile,
     verbose: true,
   );
@@ -42,8 +42,8 @@ Future<void> createIconsFromArguments(List<String> arguments) async {
   } else {
     try {
       for (var flavor in flavors) {
-        final Map<String, dynamic> yamlConfig =
-            loadConfigFile(flavorConfigFile(flavor), flavorConfigFile(flavor));
+        final Map<String, dynamic> yamlConfig = Config.loadConfigFile(
+            flavorConfigFile(flavor), flavorConfigFile(flavor));
         await createIconsFromConfig(yamlConfig, flavor);
       }
     } catch (e) {
