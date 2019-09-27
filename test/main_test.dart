@@ -1,12 +1,13 @@
 import 'dart:io';
 
-import 'package:args/args.dart';
-import 'package:flutter_launcher_icons/main.dart' show defaultConfigFile;
+// import 'package:args/args.dart';
+import 'package:flutter_launcher_icons/constants.dart' show defaultConfigFile;
 import 'package:path/path.dart';
 import 'package:test/test.dart';
 import 'package:flutter_launcher_icons/ios.dart' as ios;
 import 'package:flutter_launcher_icons/android.dart' as android;
 import 'package:flutter_launcher_icons/main.dart' as main_dart;
+import 'package:flutter_launcher_icons/config.dart' as config_dart;
 
 // Unit tests for main.dart
 void main() {
@@ -26,15 +27,16 @@ void main() {
 
   test('pubspec.yaml file exists', () async {
     const String path = 'test/config/test_pubspec.yaml';
-    final Map<String, dynamic> config = main_dart.loadConfigFile(path, null);
+    final Map<String, dynamic> config = config_dart.loadConfigFile(path, null);
     expect(config.length, isNotNull);
   });
 
   group('config file from args', () {
     // Create mini parser with only the wanted option, mocking the real one
-    final ArgParser parser = ArgParser()..addOption(main_dart.fileOption, abbr: 'f');
+    // final ArgParser parser = ArgParser()..addOption('file', abbr: 'f');
     final String testDir =
         join('.dart_tool', 'flutter_launcher_icons', 'test', 'config_file');
+    final File testFile = File(testDir);
 
     String currentDirectory;
     Future<void> setCurrentDirectory(String path) async {
@@ -56,8 +58,8 @@ flutter_icons:
   android: true
   ios: false
 ''');
-      final ArgResults argResults = parser.parse(<String>[]);
-      final Map<String, dynamic> config = main_dart.loadConfigFileFromArgResults(argResults);
+      // final ArgResults argResults = parser.parse(<String>[]);
+      final Map<String, dynamic> config = config_dart.loadConfig(null);
       expect(config['android'], true);
     });
     test('default_use_pubspec', () async {
@@ -67,13 +69,13 @@ flutter_icons:
   android: true
   ios: false
 ''');
-      ArgResults argResults = parser.parse(<String>[]);
-      final Map<String, dynamic> config = main_dart.loadConfigFileFromArgResults(argResults);
+      // ArgResults argResults = parser.parse(<String>[]);
+      final Map<String, dynamic> config = config_dart.loadConfig(null);
       expect(config['ios'], false);
 
       // fails if forcing default file
-      argResults = parser.parse(<String>['-f', defaultConfigFile]);
-      expect(main_dart.loadConfigFileFromArgResults(argResults), isNull);
+      // argResults = parser.parse(<String>['-f', defaultConfigFile]);
+      expect(config_dart.loadConfig(File(defaultConfigFile)), isNull);
     });
 
     test('custom', () async {
@@ -84,23 +86,23 @@ flutter_icons:
   ios: true
 ''');
       // if no argument set, should fail
-      ArgResults argResults = parser.parse(<String>['-f', 'custom.yaml']);
-      final Map<String, dynamic> config = main_dart.loadConfigFileFromArgResults(argResults);
+      // ArgResults argResults = parser.parse(<String>['-f', 'custom.yaml']);
+      final Map<String, dynamic> config = config_dart.loadConfig(File('custom.yaml'));
       expect(config['ios'], true);
 
       // should fail if no argument
-      argResults = parser.parse(<String>[]);
-      expect(main_dart.loadConfigFileFromArgResults(argResults), isNull);
+      // argResults = parser.parse(<String>[]);
+      expect(config_dart.loadConfig(null), isNull);
 
       // or missing file
-      argResults = parser.parse(<String>['-f', 'missing_custom.yaml']);
-      expect(main_dart.loadConfigFileFromArgResults(argResults), isNull);
+      // argResults = parser.parse(<String>['-f', 'missing_custom.yaml']);
+      expect(config_dart.loadConfig(File('missing_custom.yaml')), isNull);
     });
   });
 
   test('Incorrect pubspec.yaml path throws correct error message', () async {
     const String incorrectPath = 'test/config/test_pubspec.yam';
-    expect(() => main_dart.loadConfigFile(incorrectPath, null), throwsA(const TypeMatcher<FileSystemException>()));
+    expect(() => config_dart.loadConfigFile(incorrectPath, null), throwsA(const TypeMatcher<FileSystemException>()));
   });
 
   test('image_path is in config', () {
