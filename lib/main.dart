@@ -14,19 +14,6 @@ const String defaultConfigFile = 'flutter_launcher_icons.yaml';
 const String flavorConfigFilePattern = "\./flutter_launcher_icons-(.*).yaml";
 String flavorConfigFile(String flavor) => "flutter_launcher_icons-$flavor.yaml";
 
-List<String> getFlavors() {
-  List<String> flavors = [];
-  for (var item in Directory('.').listSync()) {
-    if (item is File) {
-      var match = RegExp(flavorConfigFilePattern).firstMatch(item.path);
-      if (match != null) {
-        flavors.add(match.group(1));
-      }
-    }
-  }
-  return flavors;
-}
-
 Future<void> createIconsFromArguments(List<String> arguments) async {
   final ArgParser parser = ArgParser(allowTrailingOptions: true);
   parser.addFlag(helpFlag, abbr: 'h', help: 'Usage help', negatable: false);
@@ -166,6 +153,20 @@ Map<String, dynamic> yamlMapToMap(YamlMap yamlMap) {
     }
   }
   return map;
+}
+
+List<String> getFlavors() {
+  final List<String> flavors = <String>[];
+  for (final dynamic item in Directory('.').listSync()) {
+    if (item is File) {
+      final RegExpMatch match =
+          RegExp(flavorConfigFilePattern).firstMatch(item.path);
+      if (match != null) {
+        flavors.add(match.group(1));
+      }
+    }
+  }
+  return flavors;
 }
 
 bool isImagePathInConfig(Map<String, dynamic> flutterIconsConfig) {
