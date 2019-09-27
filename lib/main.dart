@@ -14,102 +14,76 @@ Future<void> createIconsFromArguments(List<String> arguments) async {
   final args = Arguments.parse(arguments);
 
   // Flavors manangement
-  var flavors = Config.getFlavors();
-  var hasFlavors = flavors.isNotEmpty;
+  // var flavors = Config.getFlavors();
+  // var hasFlavors = flavors.isNotEmpty;
 
-  // Load the config file
-  final Map<String, dynamic> yamlConfig = Config.loadConfig(
+  final config = Config.file(
     args.configFile,
-    verbose: true,
+    flavor: args.flavor,
   );
 
-  // Create icons
-  if (!hasFlavors) {
-    try {
-      final String flavor = args.flavor;
-      final Map<String, dynamic> flavors = yamlConfig['flavors'];
-      if (flavor != null &&
-          flavor.isNotEmpty &&
-          flavors != null &&
-          flavors[flavor] != null)
-        createIconsFromConfig(flavors[flavor], flavor);
-      else
-        createIconsFromConfig(yamlConfig);
-    } catch (e) {
-      stderr.writeln(e);
-      exit(2);
-    }
-  } else {
-    try {
-      for (var flavor in flavors) {
-        final Map<String, dynamic> yamlConfig = Config.loadConfigFile(
-            flavorConfigFile(flavor), flavorConfigFile(flavor));
-        await createIconsFromConfig(yamlConfig, flavor);
-      }
-    } catch (e) {
-      stderr.writeln(e);
-      exit(2);
-    }
+  try {
+    createIconsFromConfig(config, flavor: args.flavor);
+  } catch (e) {
+    stderr.writeln(e);
+    exit(2);
   }
+
+  //   try {
+  //     for (var flavor in flavors) {
+  //       final Map<String, dynamic> yamlConfig = Config.loadConfigFile(
+  //           flavorConfigFile(flavor), flavorConfigFile(flavor));
+  //       await createIconsFromConfig(yamlConfig, flavor);
+  //     }
+  //   } catch (e) {
+  //     stderr.writeln(e);
+  //     exit(2);
+  //   }
 }
 
-Future<void> createIconsFromConfig(Map<String, dynamic> config,
-    [String flavor]) async {
-  if (!isImagePathInConfig(config)) {
+Future<void> createIconsFromConfig(Config config, {String flavor}) async {
+  final flavorConfig = config.base;
+  if (!isImagePathInConfig(flavorConfig)) {
     throw const InvalidConfigException(errorMissingImagePath);
   }
-  if (!hasAndroidOrIOSConfig(config)) {
+  if (!hasAndroidOrIOSConfig(flavorConfig)) {
     throw const InvalidConfigException(errorMissingPlatform);
   }
   final int minSdk = android_launcher_icons.minSdk();
   if (minSdk < 26 &&
-      hasAndroidAdaptiveConfig(config) &&
-      !hasAndroidConfig(config)) {
+      hasAndroidAdaptiveConfig(flavorConfig) &&
+      !hasAndroidConfig(flavorConfig)) {
     throw const InvalidConfigException(errorMissingRegularAndroid);
   }
 
-  if (isNeedingNewAndroidIcon(config)) {
-    android_launcher_icons.createDefaultIcons(config, flavor);
+  if (isNeedingNewAndroidIcon(flavorConfig)) {
+    android_launcher_icons.createDefaultIcons(flavorConfig.toMap(), flavor);
   }
-  if (hasAndroidAdaptiveConfig(config)) {
-    android_launcher_icons.createAdaptiveIcons(config, flavor);
+  if (hasAndroidAdaptiveConfig(flavorConfig)) {
+    android_launcher_icons.createAdaptiveIcons(flavorConfig.toMap(), flavor);
   }
-  if (isNeedingNewIOSIcon(config)) {
-    ios_launcher_icons.createIcons(config, flavor);
+  if (isNeedingNewIOSIcon(flavorConfig)) {
+    ios_launcher_icons.createIcons(flavorConfig.toMap(), flavor);
   }
 }
 
-bool isImagePathInConfig(Map<String, dynamic> flutterIconsConfig) {
-  return flutterIconsConfig.containsKey('image_path') ||
-      (flutterIconsConfig.containsKey('image_path_android') &&
-          flutterIconsConfig.containsKey('image_path_ios'));
-}
+bool isImagePathInConfig(FlavorConfig cfg) =>
+    cfg.baseImage != null || cfg.androidImage != null && cfg.iosImage != null;
 
-bool hasAndroidOrIOSConfig(Map<String, dynamic> flutterIconsConfig) {
-  return flutterIconsConfig.containsKey('android') ||
-      flutterIconsConfig.containsKey('ios');
-}
+bool hasAndroidOrIOSConfig(FlavorConfig cfg) =>
+    cfg.generateForAndroid || cfg.generateForIos;
 
-bool hasAndroidConfig(Map<String, dynamic> flutterLauncherIcons) {
-  return flutterLauncherIcons.containsKey('android');
-}
+bool hasAndroidConfig(FlavorConfig cfg) => cfg.generateForAndroid;
 
-bool isNeedingNewAndroidIcon(Map<String, dynamic> flutterLauncherIconsConfig) {
-  return hasAndroidConfig(flutterLauncherIconsConfig) &&
-      flutterLauncherIconsConfig['android'] != false;
-}
+bool isNeedingNewAndroidIcon(FlavorConfig cfg) =>
+    hasAndroidConfig(cfg) && cfg.generateForAndroid;
 
-bool hasAndroidAdaptiveConfig(Map<String, dynamic> flutterLauncherIconsConfig) {
-  return isNeedingNewAndroidIcon(flutterLauncherIconsConfig) &&
-      flutterLauncherIconsConfig.containsKey('adaptive_icon_background') &&
-      flutterLauncherIconsConfig.containsKey('adaptive_icon_foreground');
-}
+bool hasAndroidAdaptiveConfig(FlavorConfig cfg) =>
+    isNeedingNewAndroidIcon(cfg) &&
+    cfg.adaptiveIconBg != null &&
+    cfg.adaptiveIconFg != null;
 
-bool hasIOSConfig(Map<String, dynamic> flutterLauncherIconsConfig) {
-  return flutterLauncherIconsConfig.containsKey('ios');
-}
+bool hasIOSConfig(FlavorConfig cfg) => cfg.generateForIos;
 
-bool isNeedingNewIOSIcon(Map<String, dynamic> flutterLauncherIconsConfig) {
-  return hasIOSConfig(flutterLauncherIconsConfig) &&
-      flutterLauncherIconsConfig['ios'] != false;
-}
+bool isNeedingNewIOSIcon(FlavorConfig cfg) =>
+    hasIOSConfig(cfg) && cfg.generateForIos;

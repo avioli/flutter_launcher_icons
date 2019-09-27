@@ -45,6 +45,24 @@ If a flavor is set, `${flavorConfigFile('<flavor>')}` is looked up and used, if 
 Final fallback is to read config from `pubspec.yaml`.
 
 The configuration in any of those files should be under the `flutter_icons:` key.
+
+Both `$defaultConfigFile` and `pubspec.yaml` could have a key, named `flavors:` where
+a list of flavors holds the per-flavor config. These flavors are merged with the
+top-level configuration:
+
+flutter_icons:
+  image_path: resources/icon/icon.png
+  ios: true
+  android: ic_launcher
+  flavors:
+    alpha:
+      image_path: resources/icon/icon-alpha.png
+      ios: false
+    beta:
+      image_path: resources/icon/icon-beta.png
+
+Flavor `alpha` will inherit `android`, while `beta` will inherit both `ios` and
+`android` from the top-level config.
 ''');
         exit(0);
       }
