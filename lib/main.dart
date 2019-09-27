@@ -148,12 +148,19 @@ Map<String, dynamic> loadConfigFile(String path, String fileOptionResult) {
   }
 
   // yamlMap has the type YamlMap, which has several unwanted sideeffects
-  final Map<String, dynamic> config = <String, dynamic>{};
-  for (MapEntry<dynamic, dynamic> entry in yamlMap['flutter_icons'].entries) {
-    config[entry.key] = entry.value;
-  }
+  return yamlMapToMap(yamlMap['flutter_icons']);
+}
 
-  return config;
+Map<String, dynamic> yamlMapToMap(YamlMap yamlMap) {
+  final Map<String, dynamic> map = <String, dynamic>{};
+  for (MapEntry<dynamic, dynamic> entry in yamlMap.entries) {
+    if (entry.value is YamlMap) {
+      map[entry.key] = yamlMapToMap(entry.value);
+    } else {
+      map[entry.key] = entry.value;
+    }
+  }
+  return map;
 }
 
 bool isImagePathInConfig(Map<String, dynamic> flutterIconsConfig) {
