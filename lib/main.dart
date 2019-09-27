@@ -15,15 +15,26 @@ const String flavorConfigFilePattern = "\./flutter_launcher_icons-(.*).yaml";
 String flavorConfigFile(String flavor) => "flutter_launcher_icons-$flavor.yaml";
 
 Future<void> createIconsFromArguments(List<String> arguments) async {
-  final ArgParser parser = ArgParser(allowTrailingOptions: true);
-  parser.addFlag(helpFlag, abbr: 'h', help: 'Usage help', negatable: false);
+  final parser = ArgParser(allowTrailingOptions: true);
+  parser.addFlag(
+    helpFlag,
+    abbr: 'h',
+    help: 'Usage help',
+    negatable: false,
+  );
   // Make default null to differentiate when it is explicitly set
-  parser.addOption(fileOption,
-      abbr: 'f', help: 'Config file (default: $defaultConfigFile)');
-  parser.addOption(flavorOption, help: 'Use flavor');
-  final ArgResults argResults = parser.parse(arguments);
+  parser.addOption(
+    fileOption,
+    abbr: 'f',
+    help: 'Config file (default: $defaultConfigFile)',
+  );
+  parser.addOption(
+    flavorOption,
+    help: 'Use flavor',
+  );
+  final argResults = parser.parse(arguments);
 
-  if (argResults[helpFlag]) {
+  if (argResults[helpFlag] as bool) {
     stdout.writeln('Generates icons for iOS and Android');
     stdout.writeln(parser.usage);
     exit(0);
