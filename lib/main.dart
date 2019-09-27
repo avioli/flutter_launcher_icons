@@ -7,6 +7,7 @@ import 'package:flutter_launcher_icons/ios.dart' as ios_launcher_icons;
 import 'package:flutter_launcher_icons/constants.dart';
 import 'package:flutter_launcher_icons/custom_exceptions.dart';
 
+const String flavorOption = 'flavor';
 const String fileOption = 'file';
 const String helpFlag = 'help';
 const String defaultConfigFile = 'flutter_launcher_icons.yaml';
@@ -32,6 +33,7 @@ Future<void> createIconsFromArguments(List<String> arguments) async {
   // Make default null to differentiate when it is explicitly set
   parser.addOption(fileOption,
       abbr: 'f', help: 'Config file (default: $defaultConfigFile)');
+  parser.addOption(flavorOption, help: 'Use flavor');
   final ArgResults argResults = parser.parse(arguments);
 
   if (argResults[helpFlag]) {
