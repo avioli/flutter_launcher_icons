@@ -1,15 +1,19 @@
 const String defaultConfigFile = 'flutter_launcher_icons.yaml';
-const String flavorConfigFilePattern = "\./flutter_launcher_icons-(.*).yaml";
-String flavorConfigFile(String flavor) => "flutter_launcher_icons-$flavor.yaml";
+const String flavorConfigFilePattern = '\./flutter_launcher_icons-(.*).yaml';
+String flavorConfigFile(String flavor) => 'flutter_launcher_icons-$flavor.yaml';
 
-String androidResFolder(String flavor) => "android/app/src/${flavor ?? 'main'}/res/";
-String androidColorsFile(String flavor) => "android/app/src/${flavor ?? 'main'}/res/values/colors.xml";
-String androidManifestFile(String flavor) => "android/app/src/${flavor ?? 'main'}/AndroidManifest.xml";
+String androidResFolder(String flavor) =>
+    "android/app/src/${flavor ?? 'main'}/res/";
+String androidColorsFile(String flavor) =>
+    "android/app/src/${flavor ?? 'main'}/res/values/colors.xml";
+String androidManifestFile(String flavor) =>
+    "android/app/src/${flavor ?? 'main'}/AndroidManifest.xml";
 const String androidGradleFile = 'android/app/build.gradle';
 const String androidFileName = 'ic_launcher.png';
 const String androidAdaptiveForegroundFileName = 'ic_launcher_foreground.png';
 const String androidAdaptiveBackgroundFileName = 'ic_launcher_background.png';
-String androidAdaptiveXmlFolder(String flavor) => androidResFolder(flavor) + "mipmap-anydpi-v26/";
+String androidAdaptiveXmlFolder(String flavor) =>
+    androidResFolder(flavor) + 'mipmap-anydpi-v26/';
 const String androidDefaultIconName = 'ic_launcher';
 
 const String iosDefaultIconFolder =
