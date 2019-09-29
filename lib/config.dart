@@ -64,12 +64,28 @@ class Config {
   final FlavorConfig base;
   final List<FlavorConfig> flavors;
 
+  Config mergeFlavorConfig(FlavorConfig flavorCfg) {
+    return Config._internal(
+      base: flavorCfg.withDefaults(base),
+      flavors: [],
+    );
+  }
+
   @override
   String toString() {
     return '$runtimeType('
         'base: $base'
         ', flavors: $flavors'
         ')';
+  }
+
+  static List<Config> findAllFlavorConfigs() {
+    return _getFlavors()
+        .map<Config>((flavor) => Config.file(
+              File(flavor),
+              flavor: flavor,
+            ))
+        .toList();
   }
 }
 
