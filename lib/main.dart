@@ -12,21 +12,56 @@ import 'constants.dart';
 Future<void> createIconsFromArguments(List<String> arguments) async {
   final args = Arguments.parse(arguments);
 
-  final flavors =
-      args.flavors == null || args.flavors.isEmpty ? [null] : args.flavors;
+  try {
+    if (args.allFlavors) {
+      await processAllFlavors(configFile: args.configFile);
+    } else {
+      await processConfigFile(
+        configFile: args.configFile,
+        specificFlavors: args.flavors,
+      );
+    }
+  } catch (e) {
+    stderr.writeln(e);
+    exit(2);
+  }
+}
+
+Future<void> processAllFlavors({File configFile}) async {
+  if (configFile == null) {
+    final configs = Config.findAllFlavorConfigs();
+    if (configs.isNotEmpty) {
+      for (final config in configs) {
+        await createIconsFromConfig(config, flavor: config.base.flavor);
+      }
+      return;
+    }
+  }
+
+  final config = Config.file(configFile);
+  for (final flavorCfg in config.flavors) {
+    await createIconsFromConfig(
+      config.mergeFlavorConfig(flavorCfg),
+      flavor: flavorCfg.flavor,
+    );
+  }
+}
+
+Future<void> processConfigFile({
+  File configFile,
+  List<String> specificFlavors,
+}) async {
+  final flavors = specificFlavors == null || specificFlavors.isEmpty
+      ? [null]
+      : specificFlavors;
 
   for (final flavor in flavors) {
     final config = Config.file(
-      args.configFile,
+      configFile,
       flavor: flavor,
     );
 
-    try {
-      createIconsFromConfig(config, flavor: flavor);
-    } catch (e) {
-      stderr.writeln(e);
-      exit(2);
-    }
+    await createIconsFromConfig(config, flavor: flavor);
   }
 }
 

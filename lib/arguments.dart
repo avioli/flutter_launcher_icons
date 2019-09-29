@@ -22,6 +22,11 @@ class Arguments {
       'flavor',
       help: 'Use flavor',
     );
+    parser.addFlag(
+      'all-flavors',
+      help: 'Find and generate for all flavors',
+      negatable: false,
+    );
 
     try {
       final argResults = parser.parse(arguments);
@@ -30,6 +35,7 @@ class Arguments {
         help: argResults['help'] as bool,
         configFile: argResults['file'] as String,
         flavors: argResults['flavor'] as List<String>,
+        allFlavors: argResults['all-flavors'] as bool,
       );
 
       if (args.help) {
@@ -80,9 +86,11 @@ Flavor `alpha` will inherit `android`, while `beta` will inherit both `ios` and
     this.help = false,
     String configFile,
     this.flavors,
+    this.allFlavors,
   }) : configFile = configFile == null ? null : File(configFile);
 
   final bool help;
   final File configFile;
   final List<String> flavors;
+  final bool allFlavors;
 }
