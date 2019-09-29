@@ -9,36 +9,25 @@ import 'package:flutter_launcher_icons/ios.dart' as ios_launcher_icons;
 import 'config.dart';
 import 'constants.dart';
 
-
 Future<void> createIconsFromArguments(List<String> arguments) async {
   final args = Arguments.parse(arguments);
 
-  // Flavors manangement
-  // var flavors = Config.getFlavors();
-  // var hasFlavors = flavors.isNotEmpty;
+  final flavors =
+      args.flavors == null || args.flavors.isEmpty ? [null] : args.flavors;
 
-  final config = Config.file(
-    args.configFile,
-    flavor: args.flavor,
-  );
+  for (final flavor in flavors) {
+    final config = Config.file(
+      args.configFile,
+      flavor: flavor,
+    );
 
-  try {
-    createIconsFromConfig(config, flavor: args.flavor);
-  } catch (e) {
-    stderr.writeln(e);
-    exit(2);
+    try {
+      createIconsFromConfig(config, flavor: flavor);
+    } catch (e) {
+      stderr.writeln(e);
+      exit(2);
+    }
   }
-
-  //   try {
-  //     for (var flavor in flavors) {
-  //       final Map<String, dynamic> yamlConfig = Config.loadConfigFile(
-  //           flavorConfigFile(flavor), flavorConfigFile(flavor));
-  //       await createIconsFromConfig(yamlConfig, flavor);
-  //     }
-  //   } catch (e) {
-  //     stderr.writeln(e);
-  //     exit(2);
-  //   }
 }
 
 Future<void> createIconsFromConfig(Config config, {String flavor}) async {

@@ -18,7 +18,7 @@ class Arguments {
       abbr: 'f',
       help: 'Config file (default: $defaultConfigFile)',
     );
-    parser.addOption(
+    parser.addMultiOption(
       'flavor',
       help: 'Use flavor',
     );
@@ -29,7 +29,7 @@ class Arguments {
       final args = Arguments._internal(
         help: argResults['help'] as bool,
         configFile: argResults['file'] as String,
-        flavor: argResults['flavor'] as String,
+        flavors: argResults['flavor'] as List<String>,
       );
 
       if (args.help) {
@@ -79,10 +79,10 @@ Flavor `alpha` will inherit `android`, while `beta` will inherit both `ios` and
   Arguments._internal({
     this.help = false,
     String configFile,
-    this.flavor,
+    this.flavors,
   }) : configFile = configFile == null ? null : File(configFile);
 
   final bool help;
   final File configFile;
-  final String flavor;
+  final List<String> flavors;
 }
