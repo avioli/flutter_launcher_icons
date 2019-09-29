@@ -37,7 +37,7 @@ class Config {
           flavorsMap[flavor] as Map<String, dynamic>,
           flavor: flavor,
         );
-        base = result.merge(base);
+        base = result.withDefaults(base);
       } else {
         throw NoConfigFoundException('No config found for flavor `$flavor`');
       }
@@ -123,7 +123,7 @@ class FlavorConfig {
   final String adaptiveIconBg;
   final String adaptiveIconFg;
 
-  FlavorConfig merge(FlavorConfig other) {
+  FlavorConfig withDefaults(FlavorConfig other) {
     if (other == null) {
       return this;
     }
