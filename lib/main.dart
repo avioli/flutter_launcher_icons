@@ -12,18 +12,13 @@ import 'constants.dart';
 Future<void> createIconsFromArguments(List<String> arguments) async {
   final args = Arguments.parse(arguments);
 
-  try {
-    if (args.allFlavors) {
-      await processAllFlavors(configFile: args.configFile);
-    } else {
-      await processConfigFile(
-        configFile: args.configFile,
-        specificFlavors: args.flavors,
-      );
-    }
-  } catch (e) {
-    stderr.writeln(e);
-    exit(2);
+  if (args.allFlavors) {
+    await processAllFlavors(configFile: args.configFile);
+  } else {
+    await processConfigFile(
+      configFile: args.configFile,
+      specificFlavors: args.flavors
+    );
   }
 }
 
