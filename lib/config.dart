@@ -93,20 +93,16 @@ class FlavorConfig {
   factory FlavorConfig.fromMap(Map<String, dynamic> map, {String flavor}) {
     final dynamic androidValue = map[_androidKey];
     final dynamic iosValue = map[_iosKey];
-    final generateForAndroid = androidValue is bool && androidValue == true;
-    final generateForIos = iosValue is bool && iosValue == true;
-    final androidName = _getString(androidValue);
-    final iosName = _getString(iosValue);
 
     return FlavorConfig._internal(
       flavor: flavor,
       baseImage: _getFile(map[_imagePathKey]),
       androidImage: _getFile(map[_imagePathAndroidKey]),
       iosImage: _getFile(map[_imagePathIosKey]),
-      generateForAndroid: generateForAndroid || androidName != null,
-      generateForIos: generateForIos || iosName != null,
-      androidName: androidName,
-      iosName: iosName,
+      generateForAndroid: _getBool(androidValue),
+      generateForIos: _getBool(iosValue),
+      androidName: _getString(androidValue),
+      iosName: _getString(iosValue),
       adaptiveIconBg: _getString(map[_adaptiveIconBgKey]),
       adaptiveIconFg: _getString(map[_adaptiveIconFgKey]),
     );
@@ -138,6 +134,14 @@ class FlavorConfig {
 
   final String adaptiveIconBg;
   final String adaptiveIconFg;
+
+  bool get shouldGenerateForAndroid =>
+      (androidImage ?? baseImage) != null &&
+      (generateForAndroid != false || androidName != null);
+
+  bool get shouldGenerateForIos =>
+      (iosImage ?? baseImage) != null &&
+      (generateForIos != false || iosName != null);
 
   FlavorConfig withDefaults(FlavorConfig other) {
     if (other == null) {
@@ -254,6 +258,13 @@ File _getFile(dynamic filePath) {
 String _getString(dynamic string) {
   if (string is String && string.trim().isNotEmpty) {
     return string.trim();
+  }
+  return null;
+}
+
+bool _getBool(dynamic value) {
+  if (value is bool) {
+    return value;
   }
   return null;
 }
