@@ -16,14 +16,23 @@ const _adaptiveIconBgKey = 'adaptive_icon_background';
 const _adaptiveIconFgKey = 'adaptive_icon_foreground';
 const _flavorsKey = 'flavors';
 
+typedef Finder = File Function(File file, String flavor);
+typedef Reader = Map<String, dynamic> Function(File file);
+
 class Config {
-  factory Config.file(File file, {String flavor}) {
-    file = _findFile(file, flavor);
+  factory Config.file(
+    File file, {
+    String flavor,
+    // NOTE: these are defined here for mocking when testing
+    Finder finder = _findFile,
+    Reader reader = _readFile,
+  }) {
+    file = finder(file, flavor);
     if (file == null) {
       throw const NoConfigFoundException('No config file was found');
     }
 
-    final map = _readFile(file);
+    final map = reader(file);
     FlavorConfig base = FlavorConfig.fromMap(map);
 
     final List<FlavorConfig> flavors = [];
