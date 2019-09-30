@@ -129,5 +129,61 @@ void main() {
         expect(cfg2.shouldGenerateForAndroid, isFalse);
       });
     });
+
+    test('withDefaults', () {
+      final base = FlavorConfig.fromMap(<String, dynamic>{
+        'image_path': 'path/to/image',
+        'image_path_android': 'android/path/to/image',
+        'image_path_ios': 'ios/path/to/image',
+      });
+
+      final partial = FlavorConfig.fromMap(<String, dynamic>{
+        'image_path': 'path/to/image-alt',
+      });
+
+      final combined = partial.withDefaults(base);
+
+      expect(combined.baseImage?.path, 'path/to/image-alt');
+      expect(combined.androidImage?.path, 'android/path/to/image');
+      expect(combined.iosImage?.path, 'ios/path/to/image');
+    });
+
+    test('toMap', () {
+      final cfg1 = FlavorConfig.fromMap(<String, dynamic>{
+        'image_path': 'path/to/image',
+        'image_path_android': 'android/path/to/image',
+        'image_path_ios': 'ios/path/to/image',
+        'android': 'ic_launcher',
+        'ios': 'Icon-App',
+        'adaptive_icon_background': 'android/path/to/bg',
+        'adaptive_icon_foreground': 'android/path/to/fg',
+      }, flavor: 'all_set');
+
+      final expectedMap1 = <String, dynamic>{
+        'image_path': 'path/to/image',
+        'image_path_android': 'android/path/to/image',
+        'image_path_ios': 'ios/path/to/image',
+        'android': 'ic_launcher',
+        'ios': 'Icon-App',
+        'adaptive_icon_background': 'android/path/to/bg',
+        'adaptive_icon_foreground': 'android/path/to/fg',
+      };
+      expect(cfg1.toMap(), equals(expectedMap1));
+
+      final cfg2 = FlavorConfig.fromMap(<String, dynamic>{
+        'android': true,
+        'ios': false,
+      });
+      final expectedMap2 = <String, dynamic>{
+        'image_path': null,
+        'image_path_android': null,
+        'image_path_ios': null,
+        'android': true,
+        'ios': false,
+        'adaptive_icon_background': null,
+        'adaptive_icon_foreground': null,
+      };
+      expect(cfg2.toMap(), equals(expectedMap2));
+    });
   });
 }
