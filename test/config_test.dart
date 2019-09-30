@@ -69,66 +69,71 @@ void main() {
       expect(cfg.adaptiveIconFg, isNull);
     });
 
-    group('should generate for android', () {
-      test('image_path', () {
-        final cfg1 = FlavorConfig.fromMap(<String, dynamic>{
-          'image_path': 'path/to/image',
-        });
-        expect(cfg1.shouldGenerateForAndroid, isTrue);
+    void testShouldGenerate(String platform, bool getActual(FlavorConfig cfg)) {
+      group('should generate for $platform', () {
+        test('image_path', () {
+          final cfg1 = FlavorConfig.fromMap(<String, dynamic>{
+            'image_path': 'path/to/image',
+          });
+          expect(getActual(cfg1), isTrue);
 
-        final cfg2 = FlavorConfig.fromMap(<String, dynamic>{
-          'image_path': 'path/to/image',
-          'android': true,
-        });
-        expect(cfg2.shouldGenerateForAndroid, isTrue);
+          final cfg2 = FlavorConfig.fromMap(<String, dynamic>{
+            'image_path': 'path/to/image',
+            platform: true,
+          });
+          expect(getActual(cfg2), isTrue);
 
-        final cfg3 = FlavorConfig.fromMap(<String, dynamic>{
-          'image_path': 'path/to/image',
-          'android': 'ic_launcher',
+          final cfg3 = FlavorConfig.fromMap(<String, dynamic>{
+            'image_path': 'path/to/image',
+            platform: 'ic_launcher',
+          });
+          expect(getActual(cfg3), isTrue);
         });
-        expect(cfg3.shouldGenerateForAndroid, isTrue);
+
+        test('image_path_$platform', () {
+          final cfg1 = FlavorConfig.fromMap(<String, dynamic>{
+            'image_path_$platform': '$platform/path/to/image',
+          });
+          expect(getActual(cfg1), isTrue);
+
+          final cfg2 = FlavorConfig.fromMap(<String, dynamic>{
+            'image_path_$platform': '$platform/path/to/image',
+            platform: true,
+          });
+          expect(getActual(cfg2), isTrue);
+
+          final cfg3 = FlavorConfig.fromMap(<String, dynamic>{
+            'image_path_$platform': '$platform/path/to/image',
+            platform: 'ic_launcher',
+          });
+          expect(getActual(cfg3), isTrue);
+        });
       });
 
-      test('image_path_android', () {
-        final cfg1 = FlavorConfig.fromMap(<String, dynamic>{
-          'image_path_android': 'android/path/to/image',
-        });
-        expect(cfg1.shouldGenerateForAndroid, isTrue);
+      group('should not generate for $platform', () {
+        test('image_path', () {
+          final cfg1 = FlavorConfig.fromMap(<String, dynamic>{});
+          expect(getActual(cfg1), isFalse);
 
-        final cfg2 = FlavorConfig.fromMap(<String, dynamic>{
-          'image_path_android': 'android/path/to/image',
-          'android': true,
+          final cfg2 = FlavorConfig.fromMap(<String, dynamic>{
+            'image_path': 'path/to/image',
+            platform: false,
+          });
+          expect(getActual(cfg2), isFalse);
         });
-        expect(cfg2.shouldGenerateForAndroid, isTrue);
 
-        final cfg3 = FlavorConfig.fromMap(<String, dynamic>{
-          'image_path_android': 'android/path/to/image',
-          'android': 'ic_launcher',
+        test('image_path_android', () {
+          final cfg2 = FlavorConfig.fromMap(<String, dynamic>{
+            'image_path_android': '$platform/path/to/image',
+            platform: false,
+          });
+          expect(getActual(cfg2), isFalse);
         });
-        expect(cfg3.shouldGenerateForAndroid, isTrue);
       });
-    });
+    }
 
-    group('should not generate for android', () {
-      test('image_path', () {
-        final cfg1 = FlavorConfig.fromMap(<String, dynamic>{});
-        expect(cfg1.shouldGenerateForAndroid, isFalse);
-
-        final cfg2 = FlavorConfig.fromMap(<String, dynamic>{
-          'image_path': 'path/to/image',
-          'android': false,
-        });
-        expect(cfg2.shouldGenerateForAndroid, isFalse);
-      });
-
-      test('image_path_android', () {
-        final cfg2 = FlavorConfig.fromMap(<String, dynamic>{
-          'image_path_android': 'android/path/to/image',
-          'android': false,
-        });
-        expect(cfg2.shouldGenerateForAndroid, isFalse);
-      });
-    });
+    testShouldGenerate('android', (cfg) => cfg.shouldGenerateForAndroid);
+    testShouldGenerate('ios', (cfg) => cfg.shouldGenerateForIos);
 
     test('withDefaults', () {
       final base = FlavorConfig.fromMap(<String, dynamic>{
