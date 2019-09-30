@@ -11,24 +11,27 @@ import 'package:flutter_launcher_icons/config.dart';
 
 // Unit tests for main.dart
 void main() {
-  test('iOS icon list is correct size', () {
-    expect(ios.iosIcons.length, 15);
-  });
+  group('sanity checks', () {
+    test('iOS icon list is correct size', () {
+      expect(ios.iosIcons.length, 15);
+    });
 
-  test('Android icon list is correct size', () {
-    expect(android.androidIcons.length, 5);
-  });
+    test('Android icon list is correct size', () {
+      expect(android.androidIcons.length, 5);
+    });
 
-  test(
-      'iOS image list used to generate Contents.json for icon directory is correct size',
+    test(
+      'iOS image list used to generate Contents.json '
+      'for icon directory is correct size',
       () {
-    expect(ios.createImageList('blah').length, 19);
-  });
+        expect(ios.createImageList('blah').length, 19);
+      },
+    );
 
-  test('pubspec.yaml file exists', () async {
-    const String path = 'test/config/test_pubspec.yaml';
-    final Map<String, dynamic> config = Config.loadConfigFile(path, null);
-    expect(config.length, isNotNull);
+    test('pubspec.yaml file exists', () {
+      final result = File('test/config/test_pubspec.yaml').existsSync();
+      expect(result, isTrue);
+    });
   });
 
   group('config file from args', () {
