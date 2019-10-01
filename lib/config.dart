@@ -33,6 +33,13 @@ class Config {
     }
 
     final map = reader(file);
+    return Config.fromMap(map);
+  }
+
+  factory Config.fromMap(
+    Map<String, dynamic> map, {
+    String flavor,
+  }) {
     FlavorConfig base = FlavorConfig.fromMap(map);
 
     final List<FlavorConfig> flavors = [];
