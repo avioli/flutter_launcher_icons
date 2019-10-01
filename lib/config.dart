@@ -27,9 +27,11 @@ class Config {
     Finder finder = _findFile,
     Reader reader = _readFile,
   }) {
-    file = finder(file, flavor);
     if (file == null) {
-      throw const NoConfigFoundException('No config file was found');
+      file = finder(file, flavor);
+      if (file == null) {
+        throw const NoConfigFoundException('No config file was found');
+      }
     }
 
     final map = reader(file);
