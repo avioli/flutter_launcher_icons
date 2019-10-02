@@ -16,26 +16,17 @@ const _adaptiveIconBgKey = 'adaptive_icon_background';
 const _adaptiveIconFgKey = 'adaptive_icon_foreground';
 const _flavorsKey = 'flavors';
 
-typedef Finder = File Function(File file, String flavor);
-typedef Reader = Map<String, dynamic> Function(File file);
-
 class Config {
-  factory Config.file(
-    File file, {
-    String flavor,
-    // NOTE: these are defined here for mocking when testing
-    Finder finder = _findFile,
-    Reader reader = _readFile,
-  }) {
+  factory Config.file(File file, {String flavor}) {
+    final fallbacks = <File>[];
     if (file == null) {
-      file = finder(file, flavor);
-      if (file == null) {
-        throw const NoConfigFoundException('No config file was found');
-      }
+      if (flavor != null && flavor.trim().isNotEmpty)
+        fallbacks.add(File(flavorConfigFile(flavor)));
+      fallbacks.add(File(defaultConfigFile));
+      fallbacks.add(File(_pubspecFile));
     }
-
-    final map = reader(file);
-    return Config.fromMap(map);
+    final cf = ConfigFile(file, fallbacks: fallbacks);
+    return Config.fromMap(cf.getMap());
   }
 
   factory Config.fromMap(
@@ -208,62 +199,69 @@ class FlavorConfig {
   }
 }
 
-File _findFile(File file, String flavor) {
-  if (file != null && file.existsSync()) {
-    return file;
-  }
+class ConfigFile {
+  ConfigFile(
+    File file, {
+    this.fallbacks,
+  }) : _finalFile = file;
 
-  if (flavor != null && flavor.trim().isNotEmpty) {
-    file = File(flavorConfigFile(flavor));
-    if (file.existsSync()) {
-      return file;
+  File _finalFile;
+  File get file => _finalFile;
+
+  final Iterable<File> fallbacks;
+
+  Map<String, dynamic> getMap() {
+    final contents = _readContents();
+
+    final dynamic yamlMap = loadYaml(contents);
+    if (yamlMap is! YamlMap) {
+      throw NoConfigFoundException('Invalid config file `${file.path}`');
     }
-  }
 
-  file = File(defaultConfigFile);
-  if (file.existsSync()) {
-    return file;
-  }
-
-  file = File(_pubspecFile);
-  if (file.existsSync()) {
-    return file;
-  }
-
-  return null;
-}
-
-Map<String, dynamic> _readFile(File file) {
-  final yamlString = file.readAsStringSync();
-
-  final dynamic yamlMap = loadYaml(yamlString);
-  if (yamlMap is! YamlMap) {
-    throw NoConfigFoundException('Invalid config file `${file.path}`');
-  }
-
-  if (yamlMap['flutter_icons'] is! YamlMap) {
-    throw NoConfigFoundException('Check that your config file '
-        '`${file.path}` has a `flutter_icons` section');
-  }
-
-  // NOTE: yamlMap has the type YamlMap, which has several unwanted side effects
-  return _yamlMapToMap(yamlMap['flutter_icons'] as YamlMap);
-}
-
-Map<String, dynamic> _yamlMapToMap(YamlMap yamlMap) {
-  final Map<String, dynamic> map = <String, dynamic>{};
-  for (MapEntry<dynamic, dynamic> entry in yamlMap.entries) {
-    if (entry.key is! String) {
-      continue;
+    if (yamlMap['flutter_icons'] is! YamlMap) {
+      throw NoConfigFoundException('Check that your config file '
+          '`${file.path}` has a `flutter_icons` section');
     }
-    final key = entry.key as String;
-    if (entry.value is YamlMap) {
-      map[key] = _yamlMapToMap(entry.value as YamlMap);
+
+    // NOTE: yamlMap has the type YamlMap, which has several unwanted side effects
+    return _yamlMapToMap(yamlMap['flutter_icons'] as YamlMap);
+  }
+
+  String _readContents() {
+    if (_finalFile != null) {
+      return file.readAsStringSync();
     } else {
-      map[key] = entry.value;
+      for (final file in fallbacks) {
+        try {
+          final contents = file.readAsStringSync();
+          _finalFile = file;
+          return contents;
+        } on FileSystemException catch (e) {
+          if (e.osError?.errorCode == 2) {
+            continue;
+          }
+          rethrow;
+        }
+      }
     }
+    throw const NoConfigFoundException('No config file found');
   }
-  return map;
+
+  Map<String, dynamic> _yamlMapToMap(YamlMap yamlMap) {
+    final Map<String, dynamic> map = <String, dynamic>{};
+    for (MapEntry<dynamic, dynamic> entry in yamlMap.entries) {
+      if (entry.key is! String) {
+        continue;
+      }
+      final key = entry.key as String;
+      if (entry.value is YamlMap) {
+        map[key] = _yamlMapToMap(entry.value as YamlMap);
+      } else {
+        map[key] = entry.value;
+      }
+    }
+    return map;
+  }
 }
 
 File _getFile(dynamic filePath) {

@@ -1,5 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter_launcher_icons/config.dart';
 import 'package:test/test.dart';
+import 'package:mockito/mockito.dart';
+
+class MockFile extends Mock implements File {}
 
 void main() {
   group('FlavorConfig', () {
@@ -189,6 +194,55 @@ void main() {
         'adaptive_icon_foreground': null,
       };
       expect(cfg2.toMap(), equals(expectedMap2));
+    });
+  });
+
+  group('ConfigFile class', () {
+    test('constructor sets file', () {
+      final cf1 = ConfigFile(null);
+      expect(cf1.file, isNull);
+
+      final cf2 = ConfigFile(File('dummy'));
+      expect(cf2.file.path, 'dummy');
+    });
+
+    test('getMap reads specified file', () {
+      final file = MockFile();
+      when(file.readAsStringSync()).thenReturn('''
+flutter_icons:
+  image_path: path/to/image
+''');
+
+      final cf = ConfigFile(file);
+      expect(cf.file, file);
+      expect(
+        cf.getMap(),
+        equals(<String, dynamic>{
+          'image_path': 'path/to/image',
+        }),
+      );
+      verify(file.readAsStringSync()).called(1);
+      verifyNoMoreInteractions(file);
+    });
+
+    test('getMap reads fallback flavor file', () {
+      final file = MockFile();
+      when(file.readAsStringSync()).thenReturn('''
+flutter_icons:
+  image_path: path/to/fallback-image
+''');
+
+      final cf = ConfigFile(null, fallbacks: [file]);
+      expect(cf.file, isNull);
+      expect(
+        cf.getMap(),
+        equals(<String, dynamic>{
+          'image_path': 'path/to/fallback-image',
+        }),
+      );
+      verify(file.readAsStringSync()).called(1);
+      verifyNoMoreInteractions(file);
+      expect(cf.file, file);
     });
   });
 }
