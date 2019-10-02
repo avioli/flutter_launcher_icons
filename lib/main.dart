@@ -17,7 +17,7 @@ Future<void> createIconsFromArguments(List<String> arguments) async {
   } else {
     await processConfigFile(
       configFile: args.configFile,
-      specificFlavors: args.flavors
+      specificFlavors: args.flavors,
     );
   }
 }
