@@ -14,10 +14,10 @@ MockFile getMockFileWithContents(String contents) {
 
 MockFile getNonExistingMockFile() {
   const notFoundErrorCode = 2;
-  const osError = OSError('file doesn\'t exist', notFoundErrorCode);
+  const osError = OSError('No such file or directory', notFoundErrorCode);
   final file = MockFile();
   when(file.readAsStringSync()).thenThrow(
-    const FileSystemException('message', 'path', osError),
+    const FileSystemException('mock_message', 'mock_path/mock_file', osError),
   );
   return file;
 }
