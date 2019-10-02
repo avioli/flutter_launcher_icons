@@ -6,6 +6,22 @@ import 'package:mockito/mockito.dart';
 
 class MockFile extends Mock implements File {}
 
+MockFile getMockFileWithContents(String contents) {
+  final file = MockFile();
+  when(file.readAsStringSync()).thenReturn(contents);
+  return file;
+}
+
+MockFile getNonExistingMockFile() {
+  const notFoundErrorCode = 2;
+  const osError = OSError('file doesn\'t exist', notFoundErrorCode);
+  final file = MockFile();
+  when(file.readAsStringSync()).thenThrow(
+    const FileSystemException('message', 'path', osError),
+  );
+  return file;
+}
+
 void main() {
   group('FlavorConfig', () {
     test('blank', () {
@@ -207,8 +223,7 @@ void main() {
     });
 
     test('getMap reads specified file', () {
-      final file = MockFile();
-      when(file.readAsStringSync()).thenReturn('''
+      final file = getMockFileWithContents('''
 flutter_icons:
   image_path: path/to/image
 ''');
@@ -225,9 +240,8 @@ flutter_icons:
       verifyNoMoreInteractions(file);
     });
 
-    test('getMap reads fallback flavor file', () {
-      final file = MockFile();
-      when(file.readAsStringSync()).thenReturn('''
+    test('getMap reads fallback file', () {
+      final file = getMockFileWithContents('''
 flutter_icons:
   image_path: path/to/fallback-image
 ''');
@@ -243,6 +257,28 @@ flutter_icons:
       verify(file.readAsStringSync()).called(1);
       verifyNoMoreInteractions(file);
       expect(cf.file, file);
+    });
+
+    test('getMap reads following fallback file if first doesn\'t exist', () {
+      final file1 = getNonExistingMockFile();
+      final file2 = getMockFileWithContents('''
+flutter_icons:
+  image_path: path/to/fallback2
+''');
+
+      final cf = ConfigFile(null, fallbacks: [file1, file2]);
+      expect(cf.file, isNull);
+      expect(
+        cf.getMap(),
+        equals(<String, dynamic>{
+          'image_path': 'path/to/fallback2',
+        }),
+      );
+      verify(file1.readAsStringSync()).called(1);
+      verifyNoMoreInteractions(file1);
+      verify(file2.readAsStringSync()).called(1);
+      verifyNoMoreInteractions(file2);
+      expect(cf.file, file2);
     });
   });
 }
