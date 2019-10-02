@@ -280,5 +280,18 @@ flutter_icons:
       verifyNoMoreInteractions(file2);
       expect(cf.file, file2);
     });
+
+    test('getMap throws if non-existing file is given', () {
+      final file = getNonExistingMockFile();
+      final cf = ConfigFile(file);
+      expect(cf.file, file);
+      expect(
+        () => cf.getMap(),
+        throwsA(const TypeMatcher<FileSystemException>().having(
+            (e) => e.osError?.errorCode, 'osError.errorCode', equals(2))),
+      );
+      verify(file.readAsStringSync()).called(1);
+      verifyNoMoreInteractions(file);
+    });
   });
 }
