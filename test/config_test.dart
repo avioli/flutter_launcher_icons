@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_launcher_icons/config.dart';
+import 'package:flutter_launcher_icons/custom_exceptions.dart';
 import 'package:test/test.dart';
 import 'package:mockito/mockito.dart';
 
@@ -296,6 +297,40 @@ flutter_icons:
             (e) => e.osError?.errorCode, 'osError.errorCode', equals(2))),
       );
       verify(file.readAsStringSync()).called(1);
+      verifyNoMoreInteractions(file);
+    });
+
+    test('getMap throws if an empty file is given', () {
+      final file = getMockFileWithContents('', 'a_mock_file.yaml');
+      final cf = ConfigFile(file);
+      expect(
+        () => cf.getMap(),
+        throwsA(const TypeMatcher<NoConfigFoundException>()
+            .having((e) => e.message, 'message', contains('a_mock_file.yaml'))),
+      );
+      verify(file.readAsStringSync()).called(1);
+      verify(file.path).called(1);
+      verifyNoMoreInteractions(file);
+    });
+
+    test('getMap throws if an file with no flutter_icons key is given', () {
+      final file = getMockFileWithContents('''
+dymmy: 1
+''', 'a_mock_config.yaml');
+      final cf = ConfigFile(file);
+      expect(
+        () => cf.getMap(),
+        throwsA(const TypeMatcher<NoConfigFoundException>().having(
+          (e) => e.message,
+          'message',
+          allOf([
+            contains('a_mock_config.yaml'),
+            contains('flutter_icons'),
+          ]),
+        )),
+      );
+      verify(file.readAsStringSync()).called(1);
+      verify(file.path).called(1);
       verifyNoMoreInteractions(file);
     });
   });
