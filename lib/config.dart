@@ -15,6 +15,7 @@ const _iosKey = 'ios';
 const _adaptiveIconBgKey = 'adaptive_icon_background';
 const _adaptiveIconFgKey = 'adaptive_icon_foreground';
 const _flavorsKey = 'flavors';
+const _notFoundErrNo = 2;
 
 class Config {
   factory Config.file(File file, {String flavor}) {
@@ -25,8 +26,20 @@ class Config {
       fallbacks.add(File(defaultConfigFile));
       fallbacks.add(File(_pubspecFile));
     }
+    
     final cf = ConfigFile(file, fallbacks: fallbacks);
-    return Config.fromMap(cf.getMap());
+
+    try {
+      return Config.fromMap(cf.getMap());
+    } on FileSystemException catch (e) {
+      if (e.osError?.errorCode == _notFoundErrNo) {
+        if (cf.file != null)
+          throw NoConfigFoundException('No config file found: ${cf.file}');
+        else
+          throw const NoConfigFoundException('No config file found');
+      }
+      rethrow;
+    }
   }
 
   factory Config.fromMap(
@@ -237,7 +250,7 @@ class ConfigFile {
           _finalFile = file;
           return contents;
         } on FileSystemException catch (e) {
-          if (e.osError?.errorCode == 2) {
+          if (e.osError?.errorCode == _notFoundErrNo) {
             continue;
           }
           rethrow;
