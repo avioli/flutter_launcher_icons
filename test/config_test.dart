@@ -300,17 +300,34 @@ flutter_icons:
       verifyNoMoreInteractions(file);
     });
 
-    test('getMap throws if an empty file is given', () {
-      final file = getMockFileWithContents('', 'a_mock_file.yaml');
-      final cf = ConfigFile(file);
-      expect(
-        () => cf.getMap(),
-        throwsA(const TypeMatcher<NoConfigFoundException>()
-            .having((e) => e.message, 'message', contains('a_mock_file.yaml'))),
-      );
-      verify(file.readAsStringSync()).called(1);
-      verify(file.path).called(1);
-      verifyNoMoreInteractions(file);
+    test('getMap throws if an invalid file is given', () {
+      {
+        final file = getMockFileWithContents('', 'a_mock_file.yaml');
+        final cf = ConfigFile(file);
+        expect(
+          () => cf.getMap(),
+          throwsA(const TypeMatcher<NoConfigFoundException>().having(
+              (e) => e.message, 'message', contains('a_mock_file.yaml'))),
+        );
+        verify(file.readAsStringSync()).called(1);
+        verify(file.path).called(1);
+        verifyNoMoreInteractions(file);
+      }
+
+      {
+        final file = getMockFileWithContents('''
+123
+''', 'a_mock_file.yaml');
+        final cf = ConfigFile(file);
+        expect(
+          () => cf.getMap(),
+          throwsA(const TypeMatcher<NoConfigFoundException>().having(
+              (e) => e.message, 'message', contains('a_mock_file.yaml'))),
+        );
+        verify(file.readAsStringSync()).called(1);
+        verify(file.path).called(1);
+        verifyNoMoreInteractions(file);
+      }
     });
 
     test('getMap throws if an file with no flutter_icons key is given', () {
