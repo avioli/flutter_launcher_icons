@@ -6,18 +6,23 @@ import 'package:mockito/mockito.dart';
 
 class MockFile extends Mock implements File {}
 
-MockFile getMockFileWithContents(String contents) {
+MockFile getMockFileWithContents(
+  String contents, [
+  String path = 'mock_path/mock_file',
+]) {
   final file = MockFile();
+  when(file.path).thenReturn(path);
   when(file.readAsStringSync()).thenReturn(contents);
   return file;
 }
 
-MockFile getNonExistingMockFile() {
+MockFile getNonExistingMockFile([String path = 'mock_path/mock_file']) {
   const notFoundErrorCode = 2;
   const osError = OSError('No such file or directory', notFoundErrorCode);
   final file = MockFile();
+  when(file.path).thenReturn(path);
   when(file.readAsStringSync()).thenThrow(
-    const FileSystemException('mock_message', 'mock_path/mock_file', osError),
+    FileSystemException('mock_message', path, osError),
   );
   return file;
 }
