@@ -93,4 +93,12 @@ Flavor `alpha` will inherit `android`, while `beta` will inherit both `ios` and
   final File configFile;
   final List<String> flavors;
   final bool allFlavors;
+
+  @override
+  String toString() => '$runtimeType('
+      'help: $help'
+      ', configFile: $configFile'
+      ', flavors: $flavors'
+      ', allFlavors: $allFlavors'
+      ')';
 }

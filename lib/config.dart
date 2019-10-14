@@ -275,6 +275,12 @@ class ConfigFile {
     }
     return map;
   }
+
+  @override
+  String toString() => '$runtimeType('
+      'file: $file'
+      ', fallbacks: $fallbacks'
+      ')';
 }
 
 File _getFile(dynamic filePath) {
