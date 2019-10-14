@@ -26,11 +26,11 @@ class Config {
       fallbacks.add(File(defaultConfigFile));
       fallbacks.add(File(_pubspecFile));
     }
-    
+
     final cf = ConfigFile(file, fallbacks: fallbacks);
 
     try {
-      return Config.fromMap(cf.getMap());
+      return Config.fromMap(cf.getMap(), flavor: flavor);
     } on FileSystemException catch (e) {
       if (e.osError?.errorCode == _notFoundErrNo) {
         if (cf.file != null)
