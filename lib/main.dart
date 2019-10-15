@@ -82,7 +82,7 @@ Future<void> createIconsFromConfig(Config config, {String flavor}) async {
     android_launcher_icons.createAdaptiveIcons(flavorConfig.toMap(), flavor);
   }
   if (isNeedingNewIOSIcon(flavorConfig)) {
-    ios_launcher_icons.createIcons(flavorConfig.toMap(), flavor);
+    ios_launcher_icons.createIcons(flavorConfig, flavor);
   }
 }
 
