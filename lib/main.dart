@@ -81,8 +81,8 @@ Future<void> createIconsFromConfig(Config config, {String flavor}) async {
   if (hasAndroidAdaptiveConfig(flavorConfig)) {
     android_launcher_icons.createAdaptiveIcons(flavorConfig.toMap(), flavor);
   }
-  if (isNeedingNewIOSIcon(flavorConfig)) {
-    ios_launcher_icons.createIcons(flavorConfig, flavor);
+  if (flavorConfig.shouldGenerateForIos) {
+    await ios_launcher_icons.createIcons(flavorConfig, flavor);
   }
 }
 
@@ -101,8 +101,3 @@ bool hasAndroidAdaptiveConfig(FlavorConfig cfg) =>
     isNeedingNewAndroidIcon(cfg) &&
     cfg.adaptiveIconBg != null &&
     cfg.adaptiveIconFg != null;
-
-bool hasIOSConfig(FlavorConfig cfg) => cfg.generateForIos;
-
-bool isNeedingNewIOSIcon(FlavorConfig cfg) =>
-    hasIOSConfig(cfg) && cfg.generateForIos;

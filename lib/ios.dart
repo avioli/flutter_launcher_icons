@@ -32,10 +32,6 @@ List<IosIconTemplate> iosIcons = <IosIconTemplate>[
 ];
 
 Future<void> createIcons(FlavorConfig config, String flavor) async {
-  if (!config.shouldGenerateForIos) {
-    return;
-  }
-
   final file = config.iosImage ?? config.baseImage;
   final sourceImage = decodeImage(await file.readAsBytes());
 
