@@ -39,9 +39,9 @@ Future<void> createIcons(FlavorConfig config, String flavor) async {
       config.iosName ?? (flavor != null ? 'AppIcon-$flavor' : 'AppIcon');
   print('Building iOS app icon set - $iconsetName');
 
+  final fileName = config.iconsetPrefix ?? iosDefaultIconName;
   for (IosIconTemplate template in iosIcons) {
     final newIconFolder = iosAssetFolder + iconsetName + '.appiconset/';
-    final fileName = config.iconsetPrefix ?? iosDefaultIconName;
     final imageFile = File(newIconFolder + fileName + template.name + '.png');
     await imageFile.create(recursive: true);
     final resizedImage = createResizedImage(template, sourceImage);
@@ -49,7 +49,7 @@ Future<void> createIcons(FlavorConfig config, String flavor) async {
   }
 
   await changeIosLauncherIcon(iconsetName, flavor);
-  await modifyContentsFile(iconsetName);
+  await modifyContentsFile(iconsetName, fileName);
 }
 
 Image createResizedImage(IosIconTemplate template, Image image) {
@@ -103,20 +103,21 @@ Future<void> changeIosLauncherIcon(String iconName, String flavor) async {
 }
 
 /// Create the Contents.json file
-Future<void> modifyContentsFile(String newIconName) async {
+Future<void> modifyContentsFile(String iconsetName, String fileName) async {
   final String newIconFolder =
-      iosAssetFolder + newIconName + '.appiconset/Contents.json';
+      iosAssetFolder + iconsetName + '.appiconset/Contents.json';
   final contentsJsonFile = await File(newIconFolder).create(recursive: true);
-  final String contentsFileContent = generateContentsFileAsString(newIconName);
+  final String contentsFileContent = generateContentsFileAsString(fileName);
   await contentsJsonFile.writeAsString(contentsFileContent);
 }
 
-String generateContentsFileAsString(String newIconName) {
-  final Map<String, dynamic> contentJson = <String, dynamic>{
-    'images': createImageList(newIconName),
-    'info': ContentsInfoObject(version: 1, author: 'xcode').toJson()
+String generateContentsFileAsString(String fileName) {
+  final data = {
+    'images': createImageList(fileName),
+    'info': ContentsInfoObject(version: 1, author: 'xcode'),
   };
-  return json.encode(contentJson);
+  const encoder = JsonEncoder.withIndent('  ');
+  return encoder.convert(data);
 }
 
 class ContentsImageObject {
@@ -149,122 +150,121 @@ class ContentsInfoObject {
   }
 }
 
-List<Map<String, String>> createImageList(String fileNamePrefix) {
-  final List<Map<String, String>> imageList = <Map<String, String>>[
+List<ContentsImageObject> createImageList(String fileNamePrefix) {
+  return <ContentsImageObject>[
     ContentsImageObject(
-            size: '20x20',
-            idiom: 'iphone',
-            filename: '$fileNamePrefix-20x20@2x.png',
-            scale: '2x')
-        .toJson(),
+      size: '20x20',
+      idiom: 'iphone',
+      filename: '$fileNamePrefix-20x20@2x.png',
+      scale: '2x',
+    ),
     ContentsImageObject(
-            size: '20x20',
-            idiom: 'iphone',
-            filename: '$fileNamePrefix-20x20@3x.png',
-            scale: '3x')
-        .toJson(),
+      size: '20x20',
+      idiom: 'iphone',
+      filename: '$fileNamePrefix-20x20@3x.png',
+      scale: '3x',
+    ),
     ContentsImageObject(
-            size: '29x29',
-            idiom: 'iphone',
-            filename: '$fileNamePrefix-29x29@1x.png',
-            scale: '1x')
-        .toJson(),
+      size: '29x29',
+      idiom: 'iphone',
+      filename: '$fileNamePrefix-29x29@1x.png',
+      scale: '1x',
+    ),
     ContentsImageObject(
-            size: '29x29',
-            idiom: 'iphone',
-            filename: '$fileNamePrefix-29x29@2x.png',
-            scale: '2x')
-        .toJson(),
+      size: '29x29',
+      idiom: 'iphone',
+      filename: '$fileNamePrefix-29x29@2x.png',
+      scale: '2x',
+    ),
     ContentsImageObject(
-            size: '29x29',
-            idiom: 'iphone',
-            filename: '$fileNamePrefix-29x29@3x.png',
-            scale: '3x')
-        .toJson(),
+      size: '29x29',
+      idiom: 'iphone',
+      filename: '$fileNamePrefix-29x29@3x.png',
+      scale: '3x',
+    ),
     ContentsImageObject(
-            size: '40x40',
-            idiom: 'iphone',
-            filename: '$fileNamePrefix-40x40@2x.png',
-            scale: '2x')
-        .toJson(),
+      size: '40x40',
+      idiom: 'iphone',
+      filename: '$fileNamePrefix-40x40@2x.png',
+      scale: '2x',
+    ),
     ContentsImageObject(
-            size: '40x40',
-            idiom: 'iphone',
-            filename: '$fileNamePrefix-40x40@3x.png',
-            scale: '3x')
-        .toJson(),
+      size: '40x40',
+      idiom: 'iphone',
+      filename: '$fileNamePrefix-40x40@3x.png',
+      scale: '3x',
+    ),
     ContentsImageObject(
-            size: '60x60',
-            idiom: 'iphone',
-            filename: '$fileNamePrefix-60x60@2x.png',
-            scale: '2x')
-        .toJson(),
+      size: '60x60',
+      idiom: 'iphone',
+      filename: '$fileNamePrefix-60x60@2x.png',
+      scale: '2x',
+    ),
     ContentsImageObject(
-            size: '60x60',
-            idiom: 'iphone',
-            filename: '$fileNamePrefix-60x60@3x.png',
-            scale: '3x')
-        .toJson(),
+      size: '60x60',
+      idiom: 'iphone',
+      filename: '$fileNamePrefix-60x60@3x.png',
+      scale: '3x',
+    ),
     ContentsImageObject(
-            size: '20x20',
-            idiom: 'ipad',
-            filename: '$fileNamePrefix-20x20@1x.png',
-            scale: '1x')
-        .toJson(),
+      size: '20x20',
+      idiom: 'ipad',
+      filename: '$fileNamePrefix-20x20@1x.png',
+      scale: '1x',
+    ),
     ContentsImageObject(
-            size: '20x20',
-            idiom: 'ipad',
-            filename: '$fileNamePrefix-20x20@2x.png',
-            scale: '2x')
-        .toJson(),
+      size: '20x20',
+      idiom: 'ipad',
+      filename: '$fileNamePrefix-20x20@2x.png',
+      scale: '2x',
+    ),
     ContentsImageObject(
-            size: '29x29',
-            idiom: 'ipad',
-            filename: '$fileNamePrefix-29x29@1x.png',
-            scale: '1x')
-        .toJson(),
+      size: '29x29',
+      idiom: 'ipad',
+      filename: '$fileNamePrefix-29x29@1x.png',
+      scale: '1x',
+    ),
     ContentsImageObject(
-            size: '29x29',
-            idiom: 'ipad',
-            filename: '$fileNamePrefix-29x29@2x.png',
-            scale: '2x')
-        .toJson(),
+      size: '29x29',
+      idiom: 'ipad',
+      filename: '$fileNamePrefix-29x29@2x.png',
+      scale: '2x',
+    ),
     ContentsImageObject(
-            size: '40x40',
-            idiom: 'ipad',
-            filename: '$fileNamePrefix-40x40@1x.png',
-            scale: '1x')
-        .toJson(),
+      size: '40x40',
+      idiom: 'ipad',
+      filename: '$fileNamePrefix-40x40@1x.png',
+      scale: '1x',
+    ),
     ContentsImageObject(
-            size: '40x40',
-            idiom: 'ipad',
-            filename: '$fileNamePrefix-40x40@2x.png',
-            scale: '2x')
-        .toJson(),
+      size: '40x40',
+      idiom: 'ipad',
+      filename: '$fileNamePrefix-40x40@2x.png',
+      scale: '2x',
+    ),
     ContentsImageObject(
-            size: '76x76',
-            idiom: 'ipad',
-            filename: '$fileNamePrefix-76x76@1x.png',
-            scale: '1x')
-        .toJson(),
+      size: '76x76',
+      idiom: 'ipad',
+      filename: '$fileNamePrefix-76x76@1x.png',
+      scale: '1x',
+    ),
     ContentsImageObject(
-            size: '76x76',
-            idiom: 'ipad',
-            filename: '$fileNamePrefix-76x76@2x.png',
-            scale: '2x')
-        .toJson(),
+      size: '76x76',
+      idiom: 'ipad',
+      filename: '$fileNamePrefix-76x76@2x.png',
+      scale: '2x',
+    ),
     ContentsImageObject(
-            size: '83.5x83.5',
-            idiom: 'ipad',
-            filename: '$fileNamePrefix-83.5x83.5@2x.png',
-            scale: '2x')
-        .toJson(),
+      size: '83.5x83.5',
+      idiom: 'ipad',
+      filename: '$fileNamePrefix-83.5x83.5@2x.png',
+      scale: '2x',
+    ),
     ContentsImageObject(
-            size: '1024x1024',
-            idiom: 'ios-marketing',
-            filename: fileNamePrefix + '-1024x1024@1x.png',
-            scale: '1x')
-        .toJson()
+      size: '1024x1024',
+      idiom: 'ios-marketing',
+      filename: fileNamePrefix + '-1024x1024@1x.png',
+      scale: '1x',
+    ),
   ];
-  return imageList;
 }
