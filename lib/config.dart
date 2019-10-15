@@ -12,6 +12,7 @@ const _imagePathAndroidKey = 'image_path_android';
 const _imagePathIosKey = 'image_path_ios';
 const _androidKey = 'android';
 const _iosKey = 'ios';
+const _iconsetPrefixKey = 'iconset_prefix';
 const _adaptiveIconBgKey = 'adaptive_icon_background';
 const _adaptiveIconFgKey = 'adaptive_icon_foreground';
 const _flavorsKey = 'flavors';
@@ -127,6 +128,7 @@ class FlavorConfig {
       iosName: _getString(iosValue),
       adaptiveIconBg: _getString(map[_adaptiveIconBgKey]),
       adaptiveIconFg: _getString(map[_adaptiveIconFgKey]),
+      iconsetPrefix: _getString(map[_iconsetPrefixKey]),
     );
   }
 
@@ -141,6 +143,7 @@ class FlavorConfig {
     @required this.iosName,
     @required this.adaptiveIconBg,
     @required this.adaptiveIconFg,
+    @required this.iconsetPrefix,
   });
 
   final String flavor;
@@ -156,6 +159,8 @@ class FlavorConfig {
 
   final String adaptiveIconBg;
   final String adaptiveIconFg;
+
+  final String iconsetPrefix;
 
   bool get shouldGenerateForAndroid =>
       (androidImage ?? baseImage) != null &&
@@ -180,6 +185,7 @@ class FlavorConfig {
       iosName: iosName ?? other.iosName,
       adaptiveIconBg: adaptiveIconBg ?? other.adaptiveIconBg,
       adaptiveIconFg: adaptiveIconFg ?? other.adaptiveIconFg,
+      iconsetPrefix: iconsetPrefix ?? other.iconsetPrefix,
     );
   }
 
@@ -192,6 +198,7 @@ class FlavorConfig {
       _iosKey: iosName != null ? iosName : generateForIos,
       _adaptiveIconBgKey: adaptiveIconBg,
       _adaptiveIconFgKey: adaptiveIconFg,
+      _iconsetPrefixKey: iconsetPrefix,
     };
   }
 
@@ -208,6 +215,7 @@ class FlavorConfig {
         ', iosName: $iosName'
         ', adaptiveIconBg: $adaptiveIconBg'
         ', adaptiveIconFg: $adaptiveIconFg'
+        ', iconsetPrefix: $iconsetPrefix'
         ')';
   }
 }
