@@ -6,31 +6,6 @@ import 'package:image/image.dart';
 import 'config.dart';
 import 'constants.dart';
 
-/// File to handle the creation of icons for iOS platform
-class IosIconTemplate {
-  IosIconTemplate({this.size, this.name});
-  final String name;
-  final int size;
-}
-
-List<IosIconTemplate> iosIcons = <IosIconTemplate>[
-  IosIconTemplate(name: '-20x20@1x', size: 20),
-  IosIconTemplate(name: '-20x20@2x', size: 40),
-  IosIconTemplate(name: '-20x20@3x', size: 60),
-  IosIconTemplate(name: '-29x29@1x', size: 29),
-  IosIconTemplate(name: '-29x29@2x', size: 58),
-  IosIconTemplate(name: '-29x29@3x', size: 87),
-  IosIconTemplate(name: '-40x40@1x', size: 40),
-  IosIconTemplate(name: '-40x40@2x', size: 80),
-  IosIconTemplate(name: '-40x40@3x', size: 120),
-  IosIconTemplate(name: '-60x60@2x', size: 120),
-  IosIconTemplate(name: '-60x60@3x', size: 180),
-  IosIconTemplate(name: '-76x76@1x', size: 76),
-  IosIconTemplate(name: '-76x76@2x', size: 152),
-  IosIconTemplate(name: '-83.5x83.5@2x', size: 167),
-  IosIconTemplate(name: '-1024x1024@1x', size: 1024),
-];
-
 Future<void> createIcons(FlavorConfig config, String flavor) async {
   final file = config.iosImage ?? config.baseImage;
   final sourceImage = decodeImage(await file.readAsBytes());
@@ -39,28 +14,41 @@ Future<void> createIcons(FlavorConfig config, String flavor) async {
       config.iosName ?? (flavor != null ? 'AppIcon-$flavor' : 'AppIcon');
   print('Building iOS app icon set - $iconsetName');
 
-  final fileName = config.iconsetPrefix ?? iosDefaultIconName;
-  for (IosIconTemplate template in iosIcons) {
+  final iconsetPrefix = config.iconsetPrefix ?? iosDefaultIconName;
+  final imageObjects = ContentsImageObject.createImageList(iconsetPrefix);
+  final Map doneMap = <String, bool>{};
+
+  for (final obj in imageObjects) {
+    final filename = obj.filename;
+    if (doneMap.containsKey(filename)) {
+      continue;
+    }
+    doneMap[filename] = true;
     final newIconFolder = iosAssetFolder + iconsetName + '.appiconset/';
-    final imageFile = File(newIconFolder + fileName + template.name + '.png');
+    final imageFile = File(newIconFolder + filename);
     await imageFile.create(recursive: true);
-    final resizedImage = createResizedImage(template, sourceImage);
+    final int side = obj.scaledSide.round();
+    final resizedImage = createResizedImage(sourceImage, side);
     await imageFile.writeAsBytes(encodePng(resizedImage));
   }
 
   await changeIosLauncherIcon(iconsetName, flavor);
-  await modifyContentsFile(iconsetName, fileName);
+  await modifyContentsFile(iconsetName, imageObjects);
 }
 
-Image createResizedImage(IosIconTemplate template, Image image) {
+Image createResizedImage(Image image, int side) {
+  if (image.width == side && image.height == side) {
+    return image;
+  }
   return copyResize(
     image,
-    width: template.size,
-    height: template.size,
+    width: side,
+    height: side,
     // Note: Do not change interpolation unless you end up with better results
     //       (see issue for result when using cubic interpolation)
     // https://github.com/fluttercommunity/flutter_launcher_icons/issues/101#issuecomment-495528733
-    interpolation: image.width >= template.size
+    interpolation: image.width >= side
+        // NOTE: fighting the formatter
         ? Interpolation.average
         : Interpolation.linear,
   );
@@ -103,36 +91,122 @@ Future<void> changeIosLauncherIcon(String iconName, String flavor) async {
 }
 
 /// Create the Contents.json file
-Future<void> modifyContentsFile(String iconsetName, String fileName) async {
+Future<void> modifyContentsFile(
+    String iconsetName, List<ContentsImageObject> images) async {
   final String newIconFolder =
       iosAssetFolder + iconsetName + '.appiconset/Contents.json';
   final contentsJsonFile = await File(newIconFolder).create(recursive: true);
-  final String contentsFileContent = generateContentsFileAsString(fileName);
+  final String contentsFileContent = generateContentsFileAsString(images);
   await contentsJsonFile.writeAsString(contentsFileContent);
 }
 
-String generateContentsFileAsString(String fileName) {
+String generateContentsFileAsString(List<ContentsImageObject> images) {
   final data = {
-    'images': createImageList(fileName),
+    'images': images,
     'info': ContentsInfoObject(version: 1, author: 'xcode'),
   };
   const encoder = JsonEncoder.withIndent('  ');
   return encoder.convert(data);
 }
 
+final _zeroesPattern = RegExp('.0+\$');
+
 class ContentsImageObject {
-  ContentsImageObject({this.size, this.idiom, this.filename, this.scale});
-  final String size;
+  ContentsImageObject({
+    this.side,
+    this.idiom,
+    this.prefix,
+    this.scale = 1,
+  })  : _side = side.toStringAsFixed(1).replaceAll(_zeroesPattern, ''),
+        _scale = '${scale}x';
+
+  final double side;
   final String idiom;
-  final String filename;
-  final String scale;
+  final String prefix;
+  final int scale;
+
+  String get filename => '$prefix-$size@$strScale.png';
+
+  final String _side;
+  String get size => '${_side}x$_side';
+
+  final String _scale;
+  String get strScale => _scale;
+
+  double get scaledSide => side * scale;
+
+  static List<ContentsImageObject> createImageList(
+    String prefix, {
+    bool includeIphone = true,
+    bool includeIpad = true,
+    bool includeAppStore = true,
+  }) {
+    final result = <ContentsImageObject>[];
+    if (includeIphone) {
+      result.addAll(forIphone(prefix));
+    }
+    if (includeIpad) {
+      result.addAll(forIpad(prefix));
+    }
+    if (includeAppStore) {
+      result.add(marketingImageObject(prefix));
+    }
+    return result;
+  }
+
+  static List<ContentsImageObject> forIphone(String prefix) {
+    return [
+      // NOTE: iPhone Notification - iOS 7-13
+      ContentsImageObject(side: 20, idiom: 'iphone', prefix: prefix, scale: 2),
+      ContentsImageObject(side: 20, idiom: 'iphone', prefix: prefix, scale: 3),
+      // NOTE: iPhone Settings - iOS 7-13
+      ContentsImageObject(side: 29, idiom: 'iphone', prefix: prefix, scale: 1),
+      ContentsImageObject(side: 29, idiom: 'iphone', prefix: prefix, scale: 2),
+      ContentsImageObject(side: 29, idiom: 'iphone', prefix: prefix, scale: 3),
+      // NOTE: iPhone Spotlight - iOS 7-13
+      ContentsImageObject(side: 40, idiom: 'iphone', prefix: prefix, scale: 2),
+      ContentsImageObject(side: 40, idiom: 'iphone', prefix: prefix, scale: 3),
+      // NOTE: iPhone App - iOS 7-13
+      ContentsImageObject(side: 60, idiom: 'iphone', prefix: prefix, scale: 2),
+      ContentsImageObject(side: 60, idiom: 'iphone', prefix: prefix, scale: 3),
+    ];
+  }
+
+  static List<ContentsImageObject> forIpad(String prefix) {
+    return [
+      // NOTE: iPad Notifications - iOS 7-13
+      ContentsImageObject(side: 20, idiom: 'ipad', prefix: prefix, scale: 1),
+      ContentsImageObject(side: 20, idiom: 'ipad', prefix: prefix, scale: 2),
+      // NOTE: iPad Settings - iOS 7-13
+      ContentsImageObject(side: 29, idiom: 'ipad', prefix: prefix, scale: 1),
+      ContentsImageObject(side: 29, idiom: 'ipad', prefix: prefix, scale: 2),
+      // NOTE: iPad Spotlight - iOS 7-13
+      ContentsImageObject(side: 40, idiom: 'ipad', prefix: prefix, scale: 1),
+      ContentsImageObject(side: 40, idiom: 'ipad', prefix: prefix, scale: 2),
+      // NOTE: iPad App - iOS 7-13
+      ContentsImageObject(side: 76, idiom: 'ipad', prefix: prefix, scale: 1),
+      ContentsImageObject(side: 76, idiom: 'ipad', prefix: prefix, scale: 2),
+      // NOTE: iPad Pro (12.9-inch) App - iOS 9-13
+      ContentsImageObject(side: 83.5, idiom: 'ipad', prefix: prefix, scale: 2),
+    ];
+  }
+
+  static ContentsImageObject marketingImageObject(String prefix) {
+    // NOTE: App Store
+    return ContentsImageObject(
+      side: 1024,
+      idiom: 'ios-marketing',
+      prefix: prefix,
+      scale: 1,
+    );
+  }
 
   Map<String, String> toJson() {
     return <String, String>{
       'size': size,
       'idiom': idiom,
       'filename': filename,
-      'scale': scale
+      'scale': strScale,
     };
   }
 }
@@ -148,123 +222,4 @@ class ContentsInfoObject {
       'author': author,
     };
   }
-}
-
-List<ContentsImageObject> createImageList(String fileNamePrefix) {
-  return <ContentsImageObject>[
-    ContentsImageObject(
-      size: '20x20',
-      idiom: 'iphone',
-      filename: '$fileNamePrefix-20x20@2x.png',
-      scale: '2x',
-    ),
-    ContentsImageObject(
-      size: '20x20',
-      idiom: 'iphone',
-      filename: '$fileNamePrefix-20x20@3x.png',
-      scale: '3x',
-    ),
-    ContentsImageObject(
-      size: '29x29',
-      idiom: 'iphone',
-      filename: '$fileNamePrefix-29x29@1x.png',
-      scale: '1x',
-    ),
-    ContentsImageObject(
-      size: '29x29',
-      idiom: 'iphone',
-      filename: '$fileNamePrefix-29x29@2x.png',
-      scale: '2x',
-    ),
-    ContentsImageObject(
-      size: '29x29',
-      idiom: 'iphone',
-      filename: '$fileNamePrefix-29x29@3x.png',
-      scale: '3x',
-    ),
-    ContentsImageObject(
-      size: '40x40',
-      idiom: 'iphone',
-      filename: '$fileNamePrefix-40x40@2x.png',
-      scale: '2x',
-    ),
-    ContentsImageObject(
-      size: '40x40',
-      idiom: 'iphone',
-      filename: '$fileNamePrefix-40x40@3x.png',
-      scale: '3x',
-    ),
-    ContentsImageObject(
-      size: '60x60',
-      idiom: 'iphone',
-      filename: '$fileNamePrefix-60x60@2x.png',
-      scale: '2x',
-    ),
-    ContentsImageObject(
-      size: '60x60',
-      idiom: 'iphone',
-      filename: '$fileNamePrefix-60x60@3x.png',
-      scale: '3x',
-    ),
-    ContentsImageObject(
-      size: '20x20',
-      idiom: 'ipad',
-      filename: '$fileNamePrefix-20x20@1x.png',
-      scale: '1x',
-    ),
-    ContentsImageObject(
-      size: '20x20',
-      idiom: 'ipad',
-      filename: '$fileNamePrefix-20x20@2x.png',
-      scale: '2x',
-    ),
-    ContentsImageObject(
-      size: '29x29',
-      idiom: 'ipad',
-      filename: '$fileNamePrefix-29x29@1x.png',
-      scale: '1x',
-    ),
-    ContentsImageObject(
-      size: '29x29',
-      idiom: 'ipad',
-      filename: '$fileNamePrefix-29x29@2x.png',
-      scale: '2x',
-    ),
-    ContentsImageObject(
-      size: '40x40',
-      idiom: 'ipad',
-      filename: '$fileNamePrefix-40x40@1x.png',
-      scale: '1x',
-    ),
-    ContentsImageObject(
-      size: '40x40',
-      idiom: 'ipad',
-      filename: '$fileNamePrefix-40x40@2x.png',
-      scale: '2x',
-    ),
-    ContentsImageObject(
-      size: '76x76',
-      idiom: 'ipad',
-      filename: '$fileNamePrefix-76x76@1x.png',
-      scale: '1x',
-    ),
-    ContentsImageObject(
-      size: '76x76',
-      idiom: 'ipad',
-      filename: '$fileNamePrefix-76x76@2x.png',
-      scale: '2x',
-    ),
-    ContentsImageObject(
-      size: '83.5x83.5',
-      idiom: 'ipad',
-      filename: '$fileNamePrefix-83.5x83.5@2x.png',
-      scale: '2x',
-    ),
-    ContentsImageObject(
-      size: '1024x1024',
-      idiom: 'ios-marketing',
-      filename: fileNamePrefix + '-1024x1024@1x.png',
-      scale: '1x',
-    ),
-  ];
 }
